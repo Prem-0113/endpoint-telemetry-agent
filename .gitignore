@@ -1,0 +1,25 @@
+# .NET build output
+bin/
+obj/
+.vs/
+artifacts/
+
+# Runtime data and databases
+data/
+demo-live-data/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.key
+
+# Logs
+logs/
+*.log
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
