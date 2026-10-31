@@ -71,7 +71,7 @@ public sealed class DashboardQueryService : IDashboardQueryService
                 sample.CpuPercent,
                 sample.MemoryUsedMb)).ToArray(),
             BuildSessionBands(rangeSamples),
-            BuildAppUsage(rangeSamples),
+            BuildAppUsage(rangeSamples, now),
             gaps,
             delivery,
             filteredRejected.Take(100).Select(request => new RejectedRequestDto(
@@ -150,29 +150,39 @@ public sealed class DashboardQueryService : IDashboardQueryService
         return bands;
     }
 
-    private AppUsageSummaryDto BuildAppUsage(IReadOnlyList<StoredSampleDto> samples)
+    private AppUsageSummaryDto BuildAppUsage(IReadOnlyList<StoredSampleDto> samples, DateTimeOffset nowUtc)
     {
         var activeSeconds = 0;
         var idleSeconds = 0;
         var lockedSeconds = 0;
         var apps = new Dictionary<string, AppAccumulator>(StringComparer.OrdinalIgnoreCase);
-        var intervalSeconds = TelemetryConstants.DefaultSampleIntervalSeconds;
+        var intervalSeconds = GetTypicalSampleIntervalSeconds(samples);
 
-        foreach (var sample in samples)
+        for (var index = 0; index < samples.Count; index++)
         {
+            var sample = samples[index];
+            var nextCapturedAtUtc = index + 1 < samples.Count ? samples[index + 1].CapturedAtUtc : nowUtc;
+            var elapsedSeconds = Math.Min(
+                intervalSeconds,
+                Math.Max(0, (int)(nextCapturedAtUtc - sample.CapturedAtUtc).TotalSeconds));
+            if (elapsedSeconds == 0)
+            {
+                continue;
+            }
+
             if (sample.SessionState is SessionState.Locked or SessionState.NoUser)
             {
-                lockedSeconds += intervalSeconds;
+                lockedSeconds += elapsedSeconds;
                 continue;
             }
 
             if ((sample.IdleSeconds ?? 0) > _options.IdleThresholdSeconds)
             {
-                idleSeconds += intervalSeconds;
+                idleSeconds += elapsedSeconds;
                 continue;
             }
 
-            activeSeconds += intervalSeconds;
+            activeSeconds += elapsedSeconds;
             var process = string.IsNullOrWhiteSpace(sample.ForegroundProcess)
                 ? "Unknown"
                 : sample.ForegroundProcess.Trim();
@@ -185,7 +195,7 @@ public sealed class DashboardQueryService : IDashboardQueryService
                 apps.Add(process, accumulator);
             }
 
-            accumulator.ActiveSeconds += intervalSeconds;
+            accumulator.ActiveSeconds += elapsedSeconds;
             accumulator.SampleCount++;
         }
 
@@ -205,6 +215,27 @@ public sealed class DashboardQueryService : IDashboardQueryService
             lockedSeconds,
             _options.IdleThresholdSeconds,
             topApps);
+    }
+
+    private static int GetTypicalSampleIntervalSeconds(IReadOnlyList<StoredSampleDto> samples)
+    {
+        var intervals = new List<int>(Math.Max(0, samples.Count - 1));
+        for (var index = 1; index < samples.Count; index++)
+        {
+            var elapsed = (int)(samples[index].CapturedAtUtc - samples[index - 1].CapturedAtUtc).TotalSeconds;
+            if (elapsed > 0)
+            {
+                intervals.Add(elapsed);
+            }
+        }
+
+        if (intervals.Count == 0)
+        {
+            return TelemetryConstants.DefaultSampleIntervalSeconds;
+        }
+
+        intervals.Sort();
+        return intervals[intervals.Count / 2];
     }
 
     private static TimeSpan ParseRange(string? range) => range?.Trim().ToLowerInvariant() switch

@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#FFFFFF">
+  <meta name="color-scheme" content="light">
+  <title>Teemly | Endpoint Telemetry</title>
+  <style>
+    :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#10194F;background:#FFFFFF;font-synthesis:none;--navy:#10194F;--body:#727FA8;--pink:#F51C80;--pink-start:#F72585;--pink-end:#E8175B;--cyan:#08C5D8;--border:#E1E6F0;--soft:#F5F7FD;--ice:#E6F6FC;--pale-pink:#FCEAF5;--shadow:0 14px 38px rgba(24,35,80,.08)}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 10% 3%,var(--ice) 0,transparent 31%),radial-gradient(ellipse at 91% 0%,var(--pale-pink) 0,transparent 28%),#fff;color:var(--navy)}
+    header{padding:14px clamp(16px,4vw,56px);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(225,230,240,.85);background:rgba(255,255,255,.9);position:sticky;top:0;z-index:2;backdrop-filter:blur(14px)}
+    .brand{display:flex;align-items:center;gap:18px;min-width:0}.brand-logo{width:178px;height:64px;overflow:hidden;display:flex;align-items:center;justify-content:center;flex:none}.brand-logo img{width:100%;height:100%;object-fit:cover;object-position:center center}.brand-divider{height:36px;width:1px;background:var(--border)}.brand-copy h1{font-size:clamp(18px,2.4vw,24px);margin:0;letter-spacing:-.04em;color:var(--navy)}.brand-copy .subtle{margin-top:4px}
+    h2{font-size:15px;margin:0 0 16px;color:var(--navy);font-weight:750;letter-spacing:-.01em}
+    .subtle,.muted{color:var(--body);font-size:12px}.header-right{display:flex;align-items:center;gap:16px}.live{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:99px;background:#EAFBF5;color:#18885F;font-size:12px;font-weight:700}.live:before{content:"";display:inline-block;width:8px;height:8px;background:#25C68A;border-radius:50%;box-shadow:0 0 0 4px rgba(37,198,138,.12)}
+    main{max-width:1600px;margin:0 auto;padding:28px clamp(16px,4vw,56px) 56px;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:18px}
+    .panel{background:rgba(255,255,255,.94);border:1px solid rgba(225,230,240,.95);border-radius:18px;padding:20px;min-width:0;box-shadow:var(--shadow);transition:transform .18s ease,box-shadow .18s ease}.panel:hover{box-shadow:0 18px 42px rgba(24,35,80,.11)}
+    .span-12{grid-column:span 12}.span-8{grid-column:span 8}.span-6{grid-column:span 6}.span-4{grid-column:span 4}
+    .toolbar{display:flex;gap:7px;align-items:center}.toolbar button{background:#fff;color:var(--body);border:1px solid var(--border);border-radius:9px;padding:7px 12px;cursor:pointer;font:inherit;font-size:12px;font-weight:650;transition:all .16s ease}.toolbar button:hover{border-color:var(--pink);color:var(--pink)}.toolbar button.active{background:linear-gradient(110deg,var(--pink-start),var(--pink-end));color:#fff;border-color:transparent;box-shadow:0 6px 14px rgba(245,28,128,.2)}
+    .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+    .table-wrap{overflow:auto;max-height:360px;border:1px solid #edf0f7;border-radius:11px}table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap}th{text-align:left;color:var(--body);font-weight:700;position:sticky;top:0;background:#F7F9FD;z-index:1}td,th{padding:10px 12px;border-bottom:1px solid #edf0f7}tbody tr{transition:background .12s ease}tbody tr:hover{background:#F8FAFE}tbody tr.selected{background:#FCEAF5}tr.device-row{cursor:pointer}
+    .badge{display:inline-block;padding:4px 9px;border-radius:99px;font-size:11px;font-weight:700;background:#f0f3f9}.badge.online{color:#147A56;background:#E7F8F0}.badge.stale{color:#9A6410;background:#FFF4D9}.badge.offline{color:#B63151;background:#FDEBF0}
+    .empty{text-align:center;color:var(--body);padding:18px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.metric{background:linear-gradient(145deg,#fff,#F8FAFE);border:1px solid #e9edf5;border-radius:12px;padding:13px}.metric strong{display:block;font-size:20px;margin:7px 0 2px;color:var(--navy);letter-spacing:-.03em}.metric label{font-size:11px;color:var(--body);font-weight:600}
+    .chart{width:100%;height:160px}.chart path{fill:none;stroke:var(--pink);stroke-width:2.5}.chart .grid{stroke:#E9EDF5;stroke-width:1}.chart text{fill:var(--body);font-size:10px}.chart.memory path{stroke:var(--cyan)}
+    .timeline{display:flex;height:32px;border-radius:9px;overflow:hidden;background:#F1F4FA;border:1px solid #e9edf5}.band{min-width:3px;position:relative}.band.active{background:linear-gradient(90deg,#20C997,#08C5D8)}.band.locked{background:linear-gradient(90deg,#FFC65C,#F3A33B)}.band.no-user{background:linear-gradient(90deg,#C0A2EF,#9568D9)}.legend{display:flex;gap:14px;margin-top:12px;font-size:11px;color:var(--body)}.legend span:before{content:"";width:8px;height:8px;display:inline-block;border-radius:3px;margin-right:6px;background:var(--c)}
+    .split{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.split div{padding:10px;background:#F7F9FD;border:1px solid #edf0f7;border-radius:10px;font-size:11px;color:var(--body)}.split strong{display:block;color:var(--navy);font-size:16px;margin-top:4px}
+    .gap-list,.health-list{display:grid;gap:8px}.gap,.health{padding:11px;background:#F7F9FD;border:1px solid #edf0f7;border-radius:10px;font-size:12px;display:flex;justify-content:space-between;gap:10px;color:var(--body)}.gap strong,.health strong{color:var(--navy)}.health{display:block}.health strong{display:block;margin-bottom:6px}
+    #error{display:none;color:#AC234A;border:1px solid #F3B9CC;background:#FFF1F6;border-radius:10px;padding:12px;margin-bottom:15px}
+    @media(max-width:1000px){.span-4{grid-column:span 6}.span-8{grid-column:span 12}}
+    @media(max-width:650px){header{position:static;padding:12px 16px}.brand{gap:10px}.brand-logo{width:112px;height:50px}.brand-divider{height:30px}.brand-copy h1{font-size:16px}.brand-copy .subtle{font-size:10px}.header-right{align-items:flex-end;flex-direction:column;gap:6px}main{gap:12px;padding-top:16px}.span-4,.span-6{grid-column:span 12}.metrics{grid-template-columns:1fr 1fr}.panel{padding:14px;border-radius:14px}.panel-head{align-items:center}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <a class="brand-logo" href="/" aria-label="Teemly home"><img src="/teemly-logo.png" alt="Teemly.io"></a>
+      <span class="brand-divider" aria-hidden="true"></span>
+      <div class="brand-copy"><h1>Endpoint Telemetry</h1><div class="subtle">Fleet health &amp; activity workspace</div></div>
+    </div>
+    <div class="header-right"><span class="live">Live monitoring</span><span id="updated" class="subtle">Waiting for data</span></div>
+  </header>
+  <main>
+    <div id="error" class="span-12" role="status"></div>
+    <section class="panel span-12"><div class="panel-head"><h2>1. Devices</h2><div class="toolbar"><button id="all-devices" class="active">All devices</button></div></div><div class="table-wrap"><table><thead><tr><th>Device ID / Name</th><th>Enrolled UTC</th><th>Last Seen UTC</th><th>Status</th><th>Agent Version</th><th>Session</th></tr></thead><tbody id="devices"></tbody></table></div></section>
+    <section class="panel span-4"><h2>2. Latest sample</h2><div id="latest" class="metrics"></div></section>
+    <section class="panel span-8">
+      <div class="panel-head"><h2>3. CPU and memory</h2><div class="toolbar" aria-label="Chart range"><button data-range="1h" class="active">1h</button><button data-range="8h">8h</button><button data-range="24h">24h</button></div></div>
+      <div id="charts"></div>
+    </section>
+    <section class="panel span-6"><h2>4. Session timeline</h2><div id="timeline" class="timeline"></div><div class="legend"><span style="--c:#36c98d">Active</span><span style="--c:#f0a54b">Locked</span><span style="--c:#9568d9">NoUser</span></div></section>
+    <section class="panel span-6"><h2>5. App usage</h2><div id="usage"></div></section>
+    <section class="panel span-12"><div class="panel-head"><h2>6. Samples</h2><span id="sample-count" class="subtle"></span></div><div class="table-wrap"><table><thead><tr><th>Sequence</th><th>Captured UTC</th><th>Received UTC</th><th>CPU %</th><th>Memory MB</th><th>Session</th><th>Idle Seconds</th><th>Foreground Process</th><th>Queue Depth</th></tr></thead><tbody id="samples"></tbody></table></div></section>
+    <section class="panel span-6"><h2>7. Delivery</h2><div id="delivery" class="metrics"></div><div id="gaps" class="gap-list" style="margin-top:12px"></div></section>
+    <section class="panel span-6"><h2>8. Rejected requests</h2><div class="table-wrap"><table><thead><tr><th>Time UTC</th><th>Endpoint</th><th>HTTP</th><th>Reason</th></tr></thead><tbody id="rejected"></tbody></table></div></section>
+    <section class="panel span-12"><h2>9. Agent health</h2><div id="health" class="health-list"></div></section>
+  </main>
+  <script>
+    (() => {
+      let selectedDevice = null;
+      let range = "1h";
+      const byId = id => document.getElementById(id);
+      const esc = value => String(value ?? "—").replace(/[&<>"']/g, character => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[character]));
+      const utc = value => value ? new Date(value).toISOString().replace("T", " ").replace(/\.\d{3}Z$/, " UTC") : "—";
+      const metric = (label, value) => `<div class="metric"><label>${esc(label)}</label><strong>${esc(value)}</strong></div>`;
+      const emptyRow = columns => `<tr><td class="empty" colspan="${columns}">No data available</td></tr>`;
+
+      function drawChart(points, key, title, cssClass, suffix) {
+        const values = points.map(point => Number(point[key]));
+        if (!values.length) return `<div class="subtle">No ${title.toLowerCase()} data in this range.</div>`;
+        const max = Math.max(1, ...values);
+        const width = 620, height = 145, left = 38, right = 10, top = 10, bottom = 22;
+        const plotWidth = width - left - right, plotHeight = height - top - bottom;
+        const coords = values.map((value, index) => {
+          const x = left + (values.length === 1 ? plotWidth / 2 : index * plotWidth / (values.length - 1));
+          const y = top + plotHeight - (value / max) * plotHeight;
+          return `${index ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`;
+        }).join(" ");
+        return `<svg class="chart ${cssClass}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${title} history">
+          <path class="grid" d="M${left} ${top + plotHeight} H${width-right} M${left} ${top + plotHeight/2} H${width-right} M${left} ${top} H${width-right}"></path>
+          <text x="2" y="${top + 4}">${esc(max.toFixed(0))}${suffix}</text><text x="8" y="${top+plotHeight}">0</text><path d="${coords}"></path>
+          <text x="${left}" y="${height-3}">${esc(utc(points[0].capturedAtUtc))}</text><text x="${width-130}" y="${height-3}">${esc(utc(points.at(-1).capturedAtUtc))}</text>
+        </svg>`;
+      }
+
+      function render(data) {
+        const devices = data.deviceStatus || [];
+        byId("all-devices").classList.toggle("active", selectedDevice === null);
+        byId("devices").innerHTML = devices.length ? devices.map(device => `
+          <tr class="device-row ${device.deviceId === selectedDevice ? "selected" : ""}" data-device="${esc(device.deviceId)}">
+            <td><strong>${esc(device.deviceId)}</strong><br><span class="muted">${esc(device.deviceName)}</span></td>
+            <td>${esc(utc(device.enrolledAtUtc))}</td><td>${esc(utc(device.lastSeenAtUtc))}</td>
+            <td><span class="badge ${esc(device.status.toLowerCase())}">${esc(device.status)}</span></td>
+            <td>${esc(device.agentVersion)}</td><td>${esc(device.currentSessionState)}</td></tr>`).join("") : emptyRow(6);
+
+        const samples = data.recentSamples || [];
+        const latest = samples[0];
+        byId("latest").innerHTML = latest
+          ? metric("CPU", `${Number(latest.cpuPercent).toFixed(1)}%`) +
+            metric("Memory", `${latest.memoryUsedMb} MB`) +
+            metric("Session", latest.sessionState) +
+            metric("Idle seconds", latest.idleSeconds ?? "—") +
+            metric("Foreground app", latest.foregroundAppName || latest.foregroundProcess || "Unknown") +
+            metric("Captured UTC", utc(latest.capturedAtUtc))
+          : `<div class="subtle">No samples received yet.</div>`;
+
+        const points = data.cpuHistory || [];
+        byId("charts").innerHTML = drawChart(points, "cpuPercent", "CPU", "", "%") +
+          drawChart(points, "memoryUsedMb", "Memory", "memory", " MB");
+        const bands = data.sessionBands || [];
+        byId("timeline").innerHTML = bands.length ? bands.map(band => {
+          const share = Math.max(1, band.sampleCount);
+          const stateClass = band.state === "NoUser" ? "no-user" : band.state.toLowerCase();
+          return `<div class="band ${esc(stateClass)}" style="flex:${share}" title="${esc(band.state)} · ${esc(utc(band.startUtc))} – ${esc(utc(band.endUtc))} · ${share} samples"></div>`;
+        }).join("") : `<span class="empty">No session history</span>`;
+
+        const usage = data.appUsageSummary || {};
+        const apps = usage.topApps || [];
+        byId("usage").innerHTML = `<div class="split">${metric("Active", `${usage.totalActiveSeconds || 0}s`)}${metric("Idle", `${usage.totalIdleSeconds || 0}s`)}${metric("Locked / No user", `${usage.totalLockedSeconds || 0}s`)}</div>` +
+          (apps.length ? `<div class="table-wrap"><table><thead><tr><th>Application</th><th>Process</th><th>Active time</th><th>Samples</th></tr></thead><tbody>${apps.map(app =>
+            `<tr><td>${esc(app.displayName)}</td><td>${esc(app.processName)}</td><td>${esc(app.activeSeconds)}s</td><td>${esc(app.sampleCount)}</td></tr>`).join("")}</tbody></table></div>`
+            : `<div class="subtle">No active application usage in this range.</div>`);
+
+        byId("sample-count").textContent = `${samples.length} samples · ${range}`;
+        byId("samples").innerHTML = samples.length ? samples.map(sample => `<tr>
+          <td>${esc(sample.sequenceNumber)}</td><td>${esc(utc(sample.capturedAtUtc))}</td><td>${esc(utc(sample.receivedAtUtc))}</td>
+          <td>${Number(sample.cpuPercent).toFixed(1)}</td><td>${esc(sample.memoryUsedMb)}</td><td>${esc(sample.sessionState)}</td>
+          <td>${esc(sample.idleSeconds)}</td><td>${esc(sample.foregroundProcess || "Unknown")}</td><td>${esc(sample.queueDepth)}</td></tr>`).join("") : emptyRow(9);
+
+        const delivery = data.deliveryStats || {};
+        byId("delivery").innerHTML = metric("Samples stored", delivery.samplesStored || 0) +
+          metric("Duplicates ignored", delivery.duplicatesIgnored || 0) +
+          metric("Dropped by cap", delivery.samplesDroppedByCap || 0) +
+          metric("Batches received", delivery.batchesReceived || 0);
+        const gaps = delivery.missingSampleGaps || [];
+        byId("gaps").innerHTML = gaps.length ? gaps.map(gap =>
+          `<div class="gap"><span>${esc(gap.deviceId)} · ${esc(gap.fromSequence)}–${esc(gap.toSequence)}</span><strong>${esc(gap.missingCount)} missing</strong></div>`).join("")
+          : `<div class="subtle">No missing sequence gaps.</div>`;
+
+        const rejected = data.rejectedRequests || [];
+        byId("rejected").innerHTML = rejected.length ? rejected.map(item => `<tr><td>${esc(utc(item.rejectedAtUtc))}</td>
+          <td>${esc(item.endpoint)}</td><td>${esc(item.httpStatus)}</td><td>${esc(item.reason)}</td></tr>`).join("") : emptyRow(4);
+        const health = data.agentHealth || [];
+        byId("health").innerHTML = health.length ? health.map(item => `<div class="health"><strong>${esc(item.deviceId)}</strong>
+          <span class="muted">Agent start UTC</span> ${esc(utc(item.agentStartedAtUtc))} &nbsp; · &nbsp;
+          <span class="muted">Restarts</span> ${esc(item.restartCount)} &nbsp; · &nbsp;
+          <span class="muted">Queue</span> ${esc(item.currentQueueDepth)} &nbsp; · &nbsp;
+          <span class="muted">Last successful sync UTC</span> ${esc(utc(item.lastSuccessfulSyncUtc))}</div>`).join("")
+          : `<div class="subtle">No enrolled agents.</div>`;
+      }
+
+      async function refresh() {
+        try {
+          const query = new URLSearchParams({ range });
+          if (selectedDevice) query.set("deviceId", selectedDevice);
+          const response = await fetch(`/api/v1/dashboard/overview?${query}`, { cache: "no-store" });
+          if (!response.ok) throw new Error(`Dashboard request failed (${response.status}).`);
+          render(await response.json());
+          byId("error").style.display = "none";
+          byId("updated").textContent = `Updated ${new Date().toISOString().replace("T", " ").replace(/\.\d{3}Z$/, " UTC")}`;
+        } catch (error) {
+          byId("error").textContent = error.message || "Unable to load dashboard data.";
+          byId("error").style.display = "block";
+        }
+      }
+
+      byId("devices").addEventListener("click", event => {
+        const row = event.target.closest("tr[data-device]");
+        if (row) {
+          selectedDevice = row.dataset.device;
+          refresh();
+        }
+      });
+      byId("all-devices").addEventListener("click", () => {
+        selectedDevice = null;
+        refresh();
+      });
+      document.querySelectorAll("[data-range]").forEach(button => button.addEventListener("click", () => {
+        range = button.dataset.range;
+        document.querySelectorAll("[data-range]").forEach(item => item.classList.toggle("active", item === button));
+        refresh();
+      }));
+      refresh();
+      window.setInterval(refresh, 5000);
+    })();
+  </script>
+</body>
+</html>

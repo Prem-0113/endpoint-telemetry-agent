@@ -555,7 +555,8 @@ public sealed class SqliteServerTelemetryStore : IServerTelemetryStore, IAsyncDi
         {
             DataSource = _options.DatabasePath,
             Mode = SqliteOpenMode.ReadWriteCreate,
-            Cache = SqliteCacheMode.Shared
+            Cache = SqliteCacheMode.Shared,
+            Pooling = false
         }.ToString());
         await connection.OpenAsync(ct).ConfigureAwait(false);
         await using var pragma = connection.CreateCommand();

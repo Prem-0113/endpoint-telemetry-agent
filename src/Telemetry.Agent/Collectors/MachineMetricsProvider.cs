@@ -6,8 +6,6 @@ namespace Telemetry.Agent.Collectors;
 
 public sealed class MachineMetricsProvider : IMachineMetricsProvider
 {
-    private const decimal FallbackCpuPercent = 5.0m;
-    private const int FallbackMemoryUsedMb = 2048;
     private readonly ILogger<MachineMetricsProvider>? _logger;
     private ulong? _previousIdle;
     private ulong? _previousTotal;
@@ -30,15 +28,16 @@ public sealed class MachineMetricsProvider : IMachineMetricsProvider
             {
                 return GetLinuxMetrics();
             }
+
+            throw new MachineMetricsUnavailableException("Machine metrics are not supported on this operating system.");
         }
         catch (Exception exception) when (
             exception is IOException or UnauthorizedAccessException or FormatException or InvalidOperationException or OverflowException or
                 DllNotFoundException or EntryPointNotFoundException or BadImageFormatException)
         {
-            _logger?.LogWarning(exception, "Machine metrics could not be read; using safe fallback values.");
+            _logger?.LogWarning(exception, "Machine metrics could not be read; this sample will be skipped.");
+            throw new MachineMetricsUnavailableException("Machine metrics could not be read.", exception);
         }
-
-        return (FallbackCpuPercent, FallbackMemoryUsedMb);
     }
 
     private (decimal CpuPercent, int MemoryUsedMb) GetWindowsMetrics()
@@ -90,7 +89,7 @@ public sealed class MachineMetricsProvider : IMachineMetricsProvider
         {
             _previousIdle = idle;
             _previousTotal = total;
-            return FallbackCpuPercent;
+            throw new MachineMetricsUnavailableException("A second CPU counter reading is required before usage can be calculated.");
         }
 
         var totalDelta = total - previousTotal;
@@ -99,7 +98,7 @@ public sealed class MachineMetricsProvider : IMachineMetricsProvider
         _previousTotal = total;
         if (totalDelta == 0)
         {
-            return FallbackCpuPercent;
+            throw new MachineMetricsUnavailableException("CPU counters did not advance; usage cannot be calculated yet.");
         }
 
         var usage = 100m * (1m - Math.Min(1m, (decimal)idleDelta / totalDelta));
@@ -144,4 +143,15 @@ public sealed class MachineMetricsProvider : IMachineMetricsProvider
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GlobalMemoryStatusEx(ref MemoryStatusEx buffer);
+}
+
+public sealed class MachineMetricsUnavailableException : Exception
+{
+    public MachineMetricsUnavailableException(string message) : base(message)
+    {
+    }
+
+    public MachineMetricsUnavailableException(string message, Exception innerException) : base(message, innerException)
+    {
+    }
 }

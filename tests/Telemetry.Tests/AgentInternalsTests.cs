@@ -11,6 +11,23 @@ using Telemetry.Shared;
 public sealed class AgentInternalsTests
 {
     [Fact]
+    public void MachineMetricsProvider_Does_Not_Fabricate_Initial_Cpu_Usage()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var provider = new MachineMetricsProvider();
+        Assert.Throws<MachineMetricsUnavailableException>(() => provider.GetMetrics());
+
+        Thread.Sleep(1000);
+        var (cpuPercent, memoryUsedMb) = provider.GetMetrics();
+        Assert.InRange(cpuPercent, 0m, 100m);
+        Assert.True(memoryUsedMb > 0);
+    }
+
+    [Fact]
     public void Malformed_Messages_Between_Components_Are_Rejected()
     {
         var now = DateTimeOffset.UtcNow;

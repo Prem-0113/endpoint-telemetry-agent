@@ -12,11 +12,26 @@ demo-live-data/
 *.db-wal
 *.sqlite
 *.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite3-shm
+*.sqlite3-wal
+*.db3
 *.key
+*.pfx
+*.p12
+*.pem
+secrets/
+.env
+.env.*
+!.env.example
 
 # Logs
 logs/
 *.log
+*.tmp
+*.temp
+*.bak
 
 # IDE and OS files
 .vscode/

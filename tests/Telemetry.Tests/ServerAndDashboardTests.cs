@@ -118,10 +118,10 @@ public sealed class ServerAndDashboardTests
         var overview = await harness.Dashboard.GetOverviewAsync(device.DeviceId, "1h", harness.Now);
         var chrome = Assert.Single(overview.AppUsageSummary.TopApps);
         Assert.Equal("chrome.exe", chrome.ProcessName);
-        Assert.Equal(60, chrome.ActiveSeconds);
-        Assert.Equal(60, overview.AppUsageSummary.TotalActiveSeconds);
-        Assert.Equal(60, overview.AppUsageSummary.TotalIdleSeconds);
-        Assert.Equal(120, overview.AppUsageSummary.TotalLockedSeconds);
+        Assert.Equal(1, chrome.ActiveSeconds);
+        Assert.Equal(1, overview.AppUsageSummary.TotalActiveSeconds);
+        Assert.Equal(1, overview.AppUsageSummary.TotalIdleSeconds);
+        Assert.Equal(2, overview.AppUsageSummary.TotalLockedSeconds);
     }
 
     [Fact]
@@ -141,7 +141,7 @@ public sealed class ServerAndDashboardTests
         var overview = await harness.Dashboard.GetOverviewAsync(device.DeviceId, "1h", harness.Now);
         var code = Assert.Single(overview.AppUsageSummary.TopApps);
         Assert.Equal("code.exe", code.ProcessName);
-        Assert.Equal(180, code.ActiveSeconds);
+        Assert.Equal(3, code.ActiveSeconds);
         Assert.Equal(3, code.SampleCount);
     }
 

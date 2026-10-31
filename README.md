@@ -22,11 +22,12 @@ The agent uses at-least-once HTTP delivery with idempotent server ingest. Locall
 Run these commands from the repository root:
 
 ```bash
+dotnet restore EndpointTelemetry.sln
 dotnet build EndpointTelemetry.sln -nologo -p:CheckEolTargetFramework=false
-dotnet test EndpointTelemetry.sln --no-build -nologo
+dotnet test EndpointTelemetry.sln -nologo
 ```
 
-The solution is configured to target .NET 8. At Phase 5 implementation, the full suite passed **23 tests**, and the solution built with **0 warnings and 0 errors** on Linux/.NET SDK 8.0.127.
+The solution targets .NET 8. On the Windows 11 QA machine with .NET SDK 8.0.427, restore succeeded, the solution built with **0 warnings and 0 errors**, and all **24 tests passed** after the latest telemetry and dashboard corrections. The current Windows quick-start steps are in [RUN_WINDOWS.md](RUN_WINDOWS.md).
 
 Run the server:
 
@@ -181,13 +182,17 @@ The read-only dashboard polls every five seconds and presents times in UTC. It d
 2. **Latest sample:** most recent sample in the selected range, including CPU, memory, session, idle, foreground app, and capture time.
 3. **CPU and memory:** stored sample points for the selected 1h/8h/24h range.
 4. **Session timeline:** chronological adjacent samples with the same session state are grouped into bands.
-5. **App usage:** each unique active, non-idle sample credits one default interval (60 seconds) to its foreground process; process grouping is case-insensitive. Idle means `IdleSeconds > 300` by default. `Locked` and `NoUser` each credit 60 seconds to locked time and never credit an app.
+5. **App usage:** active, idle, locked, and no-user durations are estimated from observed sample timestamps using a typical positive sample interval, capped to avoid crediting long gaps; process grouping is case-insensitive. Idle means `IdleSeconds > 300` by default. Locked and no-user intervals are not credited to an app.
 6. **Samples:** persisted samples for the selected device/range, ordered newest first in the UI.
 7. **Delivery:** server totals count unique stored rows; repeated deliveries increment duplicates, not stored sample count. Sequence gaps are absent ranges between stored sequence numbers and shrink/disappear on backfill. Drop and batch counters come from accepted batch metadata.
 8. **Rejected requests:** most recent audited request failures with timestamp, endpoint, HTTP status, and safe reason.
 9. **Agent health:** latest agent-start timestamp, restart count, reported queue depth, and last successful sync time.
 
-App/session duration is an estimate based on sample intervals, not a continuous stopwatch. The nominal time quantization uncertainty is approximately **±60 seconds per boundary/sample interval**; missed intervals and irregular sampling can increase it. Top-app time is credited only to foreground samples with a safe process name.
+App/session duration is an estimate based on sample intervals, not a continuous stopwatch. Irregular or missing samples reduce precision; elapsed time is capped to the typical observed interval so a long gap is not presented as continuous activity. Top-app time is credited only to foreground samples with a safe process name.
+
+## Windows verification
+
+On October 31, 2026, the agent was run interactively on Windows 11 Pro (x64) with a five-second sampling interval and delivered live samples to the dashboard. Windows CPU counter deltas and `GlobalMemoryStatusEx` physical-memory readings changed across samples; the server accepted and persisted samples and the dashboard refreshed with current values. Observed session state was Active, and Chrome/VS Code foreground process names appeared in collected samples. A controlled Win+L lock/unlock cycle and Notepad/File Explorer switching were **not verified** in that run; do not treat those specific transitions as runtime-certified. The automated test suite contains 24 passing tests, but automated tests do not replace those desktop checks.
 
 ## Live reliability scenarios
 

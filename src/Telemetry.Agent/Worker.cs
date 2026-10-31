@@ -48,8 +48,15 @@ public sealed class Worker : BackgroundService
             using var timer = new PeriodicTimer(TimeSpan.FromSeconds(Math.Max(1, _options.SampleIntervalSeconds)));
             do
             {
-                await CaptureAndStoreSampleAsync(stoppingToken).ConfigureAwait(false);
-                await _syncOrchestrator.SyncPendingBatchAsync(stoppingToken).ConfigureAwait(false);
+                try
+                {
+                    await CaptureAndStoreSampleAsync(stoppingToken).ConfigureAwait(false);
+                    await _syncOrchestrator.SyncPendingBatchAsync(stoppingToken).ConfigureAwait(false);
+                }
+                catch (MachineMetricsUnavailableException exception)
+                {
+                    _logger.LogWarning(exception, "Telemetry sample skipped because genuine machine metrics are unavailable.");
+                }
             }
             while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false));
         }
@@ -65,8 +72,8 @@ public sealed class Worker : BackgroundService
 
     public async Task<TelemetrySample> CaptureAndStoreSampleAsync(CancellationToken ct = default)
     {
-        var sequenceNumber = await _store.AllocateNextSequenceNumberAsync(ct).ConfigureAwait(false);
         var (cpuPercent, memoryUsedMb) = _machineMetrics.GetMetrics();
+        var sequenceNumber = await _store.AllocateNextSequenceNumberAsync(ct).ConfigureAwait(false);
         var capturedAtUtc = DateTimeOffset.UtcNow;
         var session = await _userSession.GetSnapshotAsync(capturedAtUtc, ct).ConfigureAwait(false);
         var queueDepth = await _store.GetQueueDepthAsync(ct).ConfigureAwait(false) + 1;

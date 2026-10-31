@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title description">
+  <title id="title">Endpoint Telemetry Agent architecture</title>
+  <desc id="description">Session 1 probe sends validated session snapshots to the Session 0 Windows service, which queues encrypted telemetry and syncs to an ASP.NET Core API and read-only dashboard.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#14213a"/>
+    </linearGradient>
+    <linearGradient id="agent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#173d61"/>
+      <stop offset="1" stop-color="#1b2c4a"/>
+    </linearGradient>
+    <linearGradient id="server" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#194c4a"/>
+      <stop offset="1" stop-color="#1b3444"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#020617" flood-opacity=".45"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M1 1L11 6 1 11Z" fill="#68b8ff"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M1 1L11 6 1 11Z" fill="#61dfbd"/>
+    </marker>
+    <style>
+      text{font-family:Inter,Segoe UI,Arial,sans-serif;fill:#edf4ff}
+      .title{font-size:34px;font-weight:700;letter-spacing:.3px}
+      .subtitle{font-size:16px;fill:#a8bdd8}
+      .zone{font-size:15px;font-weight:700;letter-spacing:2px;fill:#82a2c6}
+      .box-title{font-size:20px;font-weight:700}
+      .body{font-size:15px;fill:#c4d2e6}
+      .small{font-size:13px;fill:#a6bad3}
+      .accent{fill:#8fd3ff;font-weight:700}
+      .green{fill:#75e3c3;font-weight:700}
+      .amber{fill:#ffd07a;font-weight:700}
+      .node{stroke:#49617e;stroke-width:1.5;rx:18;filter:url(#shadow)}
+      .connector{fill:none;stroke:#68b8ff;stroke-width:3;marker-end:url(#arrow)}
+      .connector-green{fill:none;stroke:#61dfbd;stroke-width:3;marker-end:url(#arrowGreen)}
+      .divider{stroke:#30435e;stroke-width:1}
+    </style>
+  </defs>
+  <rect width="1600" height="900" fill="url(#background)"/>
+  <circle cx="1420" cy="90" r="220" fill="#1e4970" opacity=".12"/>
+  <circle cx="110" cy="850" r="260" fill="#1b806f" opacity=".08"/>
+
+  <text x="64" y="68" class="title">Endpoint Telemetry Agent</text>
+  <text x="64" y="100" class="subtitle">Privacy-aware collection · durable offline delivery · read-only fleet visibility</text>
+
+  <rect x="52" y="132" width="380" height="694" rx="24" fill="#111c2c" stroke="#30435e"/>
+  <text x="78" y="172" class="zone">INTERACTIVE USER · SESSION 1</text>
+  <rect x="86" y="210" width="310" height="188" class="node" fill="url(#agent)"/>
+  <text x="112" y="247" class="box-title">Session Probe</text>
+  <text x="112" y="278" class="body">Telemetry.Agent --session-probe</text>
+  <text x="112" y="308" class="body">Win32 foreground process + idle</text>
+  <text x="112" y="338" class="body">Desktop lock-state probe</text>
+  <text x="112" y="375" class="small">Poll every 5 seconds · no window titles</text>
+
+  <rect x="86" y="454" width="310" height="164" class="node" fill="#18374c"/>
+  <text x="112" y="492" class="box-title">Linux Desktop Probe</text>
+  <text x="112" y="524" class="body">X11 active window when available</text>
+  <text x="112" y="554" class="body">GUI process fallback · safe names only</text>
+  <text x="112" y="585" class="small">Wayland foreground visibility is limited</text>
+
+  <rect x="86" y="675" width="310" height="96" class="node" fill="#15283a"/>
+  <text x="112" y="712" class="box-title">Session Snapshot</text>
+  <text x="112" y="743" class="body">Active · Locked · NoUser</text>
+
+  <rect x="480" y="132" width="590" height="694" rx="24" fill="#111c2c" stroke="#30435e"/>
+  <text x="506" y="172" class="zone">ENDPOINT AGENT · SESSION 0 SERVICE</text>
+  <rect x="516" y="210" width="518" height="138" class="node" fill="#18334f"/>
+  <text x="544" y="250" class="box-title">Validated IPC Handoff</text>
+  <text x="544" y="282" class="body">session-ipc.json · max 4 KB · 2 minute freshness</text>
+  <text x="544" y="314" class="small">JSON, timestamp, enum, idle, process privacy validation</text>
+
+  <rect x="516" y="390" width="518" height="162" class="node" fill="url(#agent)"/>
+  <text x="544" y="430" class="box-title">EndpointTelemetryAgent</text>
+  <text x="544" y="463" class="body">Machine metrics + session sample capture</text>
+  <text x="544" y="493" class="body">Monotonic sequence · queue cap · restart health</text>
+  <text x="544" y="525" class="small">Windows Service · LocalSystem · graceful recovery</text>
+
+  <rect x="516" y="594" width="518" height="177" class="node" fill="#3a2c35"/>
+  <text x="544" y="634" class="box-title">Encrypted Offline SQLite Queue</text>
+  <text x="544" y="667" class="body"><tspan class="accent">AES-256-GCM</tspan> per sample · SampleId as AAD</text>
+  <text x="544" y="697" class="body"><tspan class="amber">DPAPI LocalMachine</tspan> key wrapping on Windows</text>
+  <text x="544" y="727" class="body">Linux HKDF key wrapping · 50 MB oldest-drop cap</text>
+  <text x="544" y="755" class="small">Remove samples only after server confirmation</text>
+
+  <rect x="1118" y="132" width="430" height="694" rx="24" fill="#111c2c" stroke="#30435e"/>
+  <text x="1144" y="172" class="zone">SERVER · READ-ONLY OPERATIONS</text>
+  <rect x="1152" y="210" width="362" height="176" class="node" fill="url(#server)"/>
+  <text x="1180" y="250" class="box-title">Exponential Backoff Sync</text>
+  <text x="1180" y="283" class="body">Stable batch IDs across retries</text>
+  <text x="1180" y="313" class="body">Transient retry · confirmation before dequeue</text>
+  <text x="1180" y="350" class="small">HTTP · bearer credential · X-Device-Id</text>
+
+  <rect x="1152" y="432" width="362" height="166" class="node" fill="url(#server)"/>
+  <text x="1180" y="472" class="box-title">ASP.NET Core Web API</text>
+  <text x="1180" y="505" class="body">Enrollment · authenticated batch ingest</text>
+  <text x="1180" y="535" class="body">Validate · deduplicate · detect sequence gaps</text>
+  <text x="1180" y="572" class="small">SQLite WAL · hashed API token only</text>
+
+  <rect x="1152" y="644" width="362" height="127" class="node" fill="#26314d"/>
+  <text x="1180" y="684" class="box-title">9-Panel Web Dashboard</text>
+  <text x="1180" y="717" class="body">5-second polling · UTC · read-only</text>
+  <text x="1180" y="746" class="small">Devices · metrics · usage · delivery · health</text>
+
+  <path d="M396 295H516" class="connector"/>
+  <text x="412" y="280" class="small">validated snapshot</text>
+  <path d="M396 536H458V275H516" class="connector"/>
+  <text x="408" y="518" class="small">desktop state</text>
+  <path d="M775 348V390" class="connector-green"/>
+  <text x="792" y="376" class="small">IPC / local probe</text>
+  <path d="M775 552V594" class="connector"/>
+  <text x="792" y="580" class="small">encrypted sample</text>
+  <path d="M1034 680H1080V298H1152" class="connector"/>
+  <text x="1050" y="663" class="small" transform="rotate(-90 1050 663)">retryable upload</text>
+  <path d="M1333 386V432" class="connector-green"/>
+  <text x="1350" y="418" class="small">HTTPS / HTTP</text>
+  <path d="M1333 598V644" class="connector-green"/>
+  <text x="1350" y="630" class="small">aggregated DTOs</text>
+
+  <line x1="64" y1="852" x2="1536" y2="852" class="divider"/>
+  <text x="64" y="878" class="small">Delivery model: at-least-once transport with idempotent server ingest; offline data remains queued until confirmed.</text>
+</svg>

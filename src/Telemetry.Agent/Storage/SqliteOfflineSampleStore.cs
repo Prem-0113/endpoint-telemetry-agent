@@ -373,7 +373,8 @@ public sealed class SqliteOfflineSampleStore : IOfflineSampleStore, IAsyncDispos
         {
             DataSource = _options.DatabasePath,
             Mode = SqliteOpenMode.ReadWriteCreate,
-            Cache = SqliteCacheMode.Shared
+            Cache = SqliteCacheMode.Shared,
+            Pooling = false
         }.ToString());
 
         try
